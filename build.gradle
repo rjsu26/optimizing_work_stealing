@@ -1,0 +1,23 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+
+// version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'junit:junit:3.8.1'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+mainClassName = 'hw5.Runner'
