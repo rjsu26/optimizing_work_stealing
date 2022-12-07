@@ -3,6 +3,12 @@ plugins {
     id 'application'
 }
 
+compileJava {
+    // exclude "**/workStealing.java"
+    exclude "**/old_Runner.java"
+    // exclude "**/Runner.java"
+}
+
 
 // version '1.0-SNAPSHOT'
 
