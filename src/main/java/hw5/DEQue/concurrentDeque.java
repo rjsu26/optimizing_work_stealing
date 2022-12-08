@@ -3,65 +3,102 @@ package hw5.DEQue;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
+/* Unbounded concurrent deque implementation from the textbook */
 
-public class concurrentDeque<T> {
-    T[] tasks;
+public class concurrentDeque {
+    private final static int LOG_CAPACITY = 4;
+    private volatile CircularArray tasks;
     volatile int bottom;
-    AtomicStampedReference<Integer> top;
+    AtomicReference<Integer> top;
 
-    public concurrentDeque(int capacity) {
-        tasks = (T[])new Object[capacity];
-        top = new AtomicStampedReference<Integer>(0, 0);
+    public concurrentDeque(int logCapacity) {
+        tasks = new CircularArray(logCapacity);
+        top = new AtomicReference<Integer>(0);
         bottom = 0;
     }
-    public concurrentDeque() {
+
+    public concurrentDeque(){
         this(10);
     }
-    
-    public void pushBottom(T r){
-        tasks[bottom] = r;
-        bottom++;
-    }
-    
-    // called by thieves to determine whether to try to steal
+
     public boolean isEmpty() {
-        return (top.getReference() < bottom);
+        int localTop = top.get();
+        int localBottom = bottom;
+        return (localBottom <= localTop);
     }
-    
-    public T popTop() {
-        int[] stamp = new int[1];
-        int oldTop = top.get(stamp);
-        int newTop = oldTop + 1;
-        int oldStamp = stamp[0];
-        if (bottom <= oldTop)
-          return null;
-          T r = tasks[oldTop];
-        
-        if (top.compareAndSet(oldTop, newTop, oldStamp, oldStamp))
-            return r;
-        else
-            return null;
-    }
-        
-    public T popBottom() {
-        if (bottom == 0)
-            return null;
-        int newBottom = --bottom;
-        T r = tasks[newBottom];
-        int[] stamp = new int[1];
-        int oldTop = top.get(stamp);
-        int newTop = 0;
-        int oldStamp = stamp[0];
-        int newStamp = oldStamp + 1;
-        
-        if (newBottom > oldTop)
-            return r;
-        if (newBottom == oldTop) {
-            bottom = 0;
-            if (top.compareAndSet(oldTop, newTop, oldStamp, newStamp))
-                return r;
+
+    public void pushBottom(Runnable r) {
+        int oldBottom = bottom;
+        int oldTop = top.get();
+        CircularArray currentTasks = tasks;
+        int size = oldBottom - oldTop;
+        if (size >= currentTasks.capacity() - 1) {
+            currentTasks = currentTasks.resize(oldBottom, oldTop);
+            tasks = currentTasks;
         }
-        top.set(newTop, newStamp);
+        currentTasks.put(oldBottom, r);
+        bottom = oldBottom + 1;
+    }
+
+    public Runnable popTop() {
+        int oldTop = top.get();
+        int newTop = oldTop + 1;
+        int oldBottom = bottom;
+        CircularArray currentTasks = tasks;
+        int size = oldBottom - oldTop;
+        if (size <= 0)
+            return null;
+        Runnable r = currentTasks.get(oldTop);
+        if (top.compareAndSet(oldTop, newTop))
+            return r;
         return null;
+    }
+
+    public Runnable popBottom() {
+        int newBottom = --bottom;
+        int oldTop = top.get();
+        int newTop = oldTop + 1;
+        int size = newBottom - oldTop;
+        if (size < 0) {
+            bottom = oldTop;
+            return null;
+        }
+        Runnable r = tasks.get(newBottom);
+        if (size > 0)
+            return r;
+        if (!top.compareAndSet(oldTop, newTop))
+            r = null;
+        bottom = newTop;
+        return r;
+    }
+}
+
+class CircularArray {
+    private int logCapacity;
+    private Runnable[] currentTasks;
+
+    CircularArray(int logCapacity) {
+        this.logCapacity = logCapacity;
+        currentTasks = new Runnable[1 << logCapacity];
+    }
+
+    int capacity() {
+        return 1 << logCapacity;
+    }
+
+    Runnable get(int i) {
+        return currentTasks[i % capacity()];
+    }
+
+    void put(int i, Runnable task) {
+        currentTasks[(capacity()+i) % capacity()] = task;
+    }
+
+    CircularArray resize(int bottom, int top) {
+        CircularArray newTasks = new CircularArray(logCapacity + 1);
+        for (int i = top; i < bottom; i++) {
+            newTasks.put(i, get(i));
+        }
+        return newTasks;
     }
 }

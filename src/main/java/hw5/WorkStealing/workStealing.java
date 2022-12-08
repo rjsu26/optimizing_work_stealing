@@ -6,11 +6,11 @@ import java.util.concurrent.*;
 import hw5.PrimeNumbers;
 
 
-public class workStealing<T extends RecursiveAction> extends Thread{
-    // static RecursiveAction stop = new RecursiveAction();
+public class workStealing extends Thread{
+    // static Runnable stop = new Runnable();
     private final Thread[] threadPool;
     // Create a deque for each thread
-    private concurrentDeque<T>[] taskQueue;
+    private concurrentDeque[] taskQueue;
     private int numThreads;
 
     public workStealing(int numThreads) {
@@ -18,7 +18,7 @@ public class workStealing<T extends RecursiveAction> extends Thread{
         
         taskQueue = new concurrentDeque[numThreads];
         for (int i = 0; i < numThreads; i++)
-            taskQueue[i] = new concurrentDeque<T>();
+            taskQueue[i] = new concurrentDeque();
         
         this.threadPool = new Thread[numThreads];
         for (int i = 0; i < numThreads; i++) {
@@ -29,10 +29,10 @@ public class workStealing<T extends RecursiveAction> extends Thread{
                 while (!currentThread.isInterrupted()) {
                     // System.out.println("thread: "+ currentThread.getId()+" running..");
                     // Dequeue a task from the task queue
-                    T task = take();
+                    Runnable task = take();
                     while (task != null) {
                         // Execute the task
-                        System.out.println("thread: "+ currentThread.getId() + " "+task.toString());
+                        // System.out.println("thread: "+ currentThread.getId() + " "+task.toString());
                         ((PrimeNumbers)task).run();
                         task = take();
                     }
@@ -42,16 +42,16 @@ public class workStealing<T extends RecursiveAction> extends Thread{
         }
     }
 
-    public void submit(T task) {
+    public void submit(Runnable task) {
         // Add the task to the deque of the current thread
         int threadId = (int) Thread.currentThread().getId() % numThreads;
         taskQueue[threadId].pushBottom(task);
     }
 
-    public T take() {
+    public Runnable take() {
         // Try to take a task from the current thread's deque
         int threadId = (int) Thread.currentThread().getId() % numThreads;
-        T task = taskQueue[threadId].popBottom();
+        Runnable task = taskQueue[threadId].popBottom();
         if (task != null) {
             return task;
         }
@@ -70,36 +70,44 @@ public class workStealing<T extends RecursiveAction> extends Thread{
         return null;
     }
 
+    public void awaitTermination()  {
+        boolean empty = false;
+        // check if all taskQueues are empty or not. 
+        do{
+            for(Thread t : threadPool){
+                int threadId = (int)t.getId() % numThreads;
+                concurrentDeque tq = taskQueue[threadId];
+                empty = tq.isEmpty();
+                if(empty==false){
+                    break; // found a thread with active tasks. no need to check other threads. just sleep
+                }
+            }
+            try{
+                Thread.sleep(1);
+            }
+            catch (Exception e){
+                
+            }
+        } while(!empty);
+        
+    }
+
     // Shutdown the thread pool
     public synchronized void shutdown() {
 
-        boolean empty=false;
-        // check if all taskQueues are empty or not. 
-        while(!empty){
-            for(Thread t : threadPool){
-                int threadId = (int)t.getId() % numThreads;
-                concurrentDeque<T> tq = taskQueue[threadId];
-                empty = tq.isEmpty();
-                System.out.println("Thread ["+threadId+"] : empty : "+empty);
-                if(empty==false)
-                    break;
-            }
-            try{
-                Thread.sleep(100);
-            }
-            catch (Exception e){
-                System.err.println("Thread sleep failed");
-            }
-        }
+        awaitTermination(); 
+        // all tasks must be complete by now
+
         // Interrupt all threads in the thread pool
         for (Thread t : threadPool) {
             try{
-
-                // System.out.println(t.isInterrupted());
+                
                 t.interrupt();
-                // System.out.println(t.getId());
-                // System.out.println(t.isAlive());
-                // System.out.println(t.isInterrupted());
+                int threadId = (int)t.getId() % numThreads;
+                while (t.isAlive()){
+                    Thread.sleep(1);
+                }
+                // System.out.println("Thread ["+threadId +"] : isAlive? "+t.isAlive());
             }
              catch (Exception e) {
                 System.out.println(e.getStackTrace());

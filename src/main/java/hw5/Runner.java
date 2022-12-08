@@ -8,17 +8,29 @@ import hw5.PrimeNumbers;
 import hw5.WorkStealing.workStealing;
 
 public class Runner {
+    private static final int ITERATIONS = 100;
+    private static final int WARMUP = 10;
 
     public static void main(String[] args) throws Throwable {
-        PrimeNumbers primes = new PrimeNumbers(10000);
-        // ForkJoinPool pool = ForkJoinPool.commonPool(); 
-        // create custom forkJoinPool object here 
-        workStealing<PrimeNumbers> pool = new workStealing<>(4);
-        pool.submit(primes);
+        workStealing pool = new workStealing(8);
+        PrimeNumbers primes;
+        long startTime = 0;
+
+        for (int i = 0; i < WARMUP+ITERATIONS; i++) {
+            if(i==WARMUP) // WARMUP complete --> start time
+                startTime = System.nanoTime();
+            primes = new PrimeNumbers(pool, 1000);
+            primes.compute();
+            pool.awaitTermination();
+        }
+        long endTime = System.nanoTime();
+
+        long runtime = endTime - startTime;
+        System.out.println("Runtime: " + runtime + " nanos");   
+        System.out.println("Throughput: " + (long)(ITERATIONS*1e9)/runtime);   
+
         pool.shutdown(); 
-        System.out.println(primes.noOfPrimeNumbers());
-        // System.out.println(pool.getStealCount());
-        System.out.println("Complete");
+        Thread.sleep(100);
         return;
     }
 }

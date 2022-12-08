@@ -8,41 +8,43 @@ import java.util.List;
 // import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveAction;
 import java.util.concurrent.atomic.AtomicInteger;
+import hw5.WorkStealing.workStealing;
 
-public class PrimeNumbers extends RecursiveAction {
+public class PrimeNumbers implements Runnable {
 
     private int startNum;
     private int endNum;
     private int THRESHOLD;
     private AtomicInteger noOfPrimeNumbers;
+    private static workStealing pool;
 
-    PrimeNumbers(int start, int end, int threshold, AtomicInteger noOfPrimeNumbers) {
+    PrimeNumbers(workStealing pools, int start, int end, int threshold, AtomicInteger noOfPrimeNumbers) {
+        pool = pools;
         this.startNum = start;
         this.endNum = end;
         this.THRESHOLD = threshold;
         this.noOfPrimeNumbers = noOfPrimeNumbers;
     }
 
-    PrimeNumbers(int end) {
-        this(1, end, 100, new AtomicInteger(0));
+    PrimeNumbers(workStealing pool, int end) {
+        this(pool, 1, end, 100, new AtomicInteger(0));
     }
 
-    private PrimeNumbers(int start, int end, AtomicInteger noOfPrimeNumbers) {
-        this(start, end, 100, noOfPrimeNumbers);
+    private PrimeNumbers(workStealing pool, int start, int end, AtomicInteger noOfPrimeNumbers) {
+        this(pool, start, end, 100, noOfPrimeNumbers);
     }
 
 
-    @Override
     protected void compute() {
         // System.out.println("Compute called..");
         if (((endNum + 1) - startNum) > THRESHOLD) {
             int mid = (startNum + endNum) / 2;
-            PrimeNumbers task1 = new PrimeNumbers(startNum, mid, noOfPrimeNumbers);
-            PrimeNumbers task2 = new PrimeNumbers(mid + 1, endNum, noOfPrimeNumbers);
-            task1.fork();
-            task2.compute();
-            task1.join();
+            PrimeNumbers task1 = new PrimeNumbers(pool, startNum, mid, noOfPrimeNumbers);
+            PrimeNumbers task2 = new PrimeNumbers(pool,mid + 1, endNum, noOfPrimeNumbers);
+            pool.submit(task1);
+            pool.submit(task2);
         } else {
+            // System.out.println("Seq for : "+startNum+" - "+endNum);
             findPrimeNumbers();
         }
     }
@@ -55,7 +57,6 @@ public class PrimeNumbers extends RecursiveAction {
         for (int num = startNum; num <= endNum; num++) {
             if (isPrime(num)) {
                 noOfPrimeNumbers.getAndIncrement();
-                // System.out.println("primes : "+ noOfPrimeNumbers());
             }
         }
     }
@@ -69,15 +70,13 @@ public class PrimeNumbers extends RecursiveAction {
             return false;
         }
 
-        int noOfNaturalNumbers = 0;
-
-        for (int i = 1; i <= number; i++) {
+        for (int i = 2; i*i <= number; i++) {
             if (number % i == 0) {
-                noOfNaturalNumbers++;
+                return false;
             }
         }
 
-        return noOfNaturalNumbers == 2;
+        return true;
     }
 
     public int noOfPrimeNumbers() {
