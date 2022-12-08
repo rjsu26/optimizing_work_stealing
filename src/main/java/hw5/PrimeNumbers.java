@@ -15,15 +15,15 @@ public class PrimeNumbers implements Runnable {
     private int startNum;
     private int endNum;
     private int THRESHOLD;
-    private AtomicInteger noOfPrimeNumbers;
+    private static AtomicInteger noOfPrimeNumbers;
     private static workStealing pool;
 
-    PrimeNumbers(workStealing pools, int start, int end, int threshold, AtomicInteger noOfPrimeNumbers) {
+    PrimeNumbers(workStealing pools, int start, int end, int threshold, AtomicInteger noOfPrimeNumber) {
         pool = pools;
         this.startNum = start;
         this.endNum = end;
         this.THRESHOLD = threshold;
-        this.noOfPrimeNumbers = noOfPrimeNumbers;
+        noOfPrimeNumbers = noOfPrimeNumber;
     }
 
     PrimeNumbers(workStealing pool, int end) {
@@ -41,10 +41,14 @@ public class PrimeNumbers implements Runnable {
             int mid = (startNum + endNum) / 2;
             PrimeNumbers task1 = new PrimeNumbers(pool, startNum, mid, noOfPrimeNumbers);
             PrimeNumbers task2 = new PrimeNumbers(pool,mid + 1, endNum, noOfPrimeNumbers);
+            // System.out.println("Thread ["+(int) Thread.currentThread().getId() +"] Submitting to pool : "+ startNum+" - "+mid);
             pool.submit(task1);
-            pool.submit(task2);
+        //    pool.submit(task2);
+
+            // compute task2 here itself
+            task2.compute();
         } else {
-            // System.out.println("Seq for : "+startNum+" - "+endNum);
+            // System.out.println("Thread ["+(int) Thread.currentThread().getId() +"] Seq for : "+startNum+" - "+endNum);
             findPrimeNumbers();
         }
     }

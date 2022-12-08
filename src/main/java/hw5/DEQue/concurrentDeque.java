@@ -21,6 +21,13 @@ public class concurrentDeque {
         this(10);
     }
 
+    public int size(){
+        int oldTop = top.get();
+        int oldBottom = bottom;
+        int size = oldBottom - oldTop;
+        return size;
+    }
+
     public boolean isEmpty() {
         int localTop = top.get();
         int localBottom = bottom;

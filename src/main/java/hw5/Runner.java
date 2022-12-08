@@ -12,7 +12,7 @@ public class Runner {
     private static final int WARMUP = 10;
 
     public static void main(String[] args) throws Throwable {
-        workStealing pool = new workStealing(8);
+        workStealing pool = new workStealing(4, "smartStealing");
         PrimeNumbers primes;
         long startTime = 0;
 
@@ -30,7 +30,7 @@ public class Runner {
         System.out.println("Throughput: " + (long)(ITERATIONS*1e9)/runtime);   
 
         pool.shutdown(); 
-        Thread.sleep(100);
+        // Thread.sleep(100);
         return;
     }
 }
