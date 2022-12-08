@@ -57,7 +57,15 @@ public class workStealing extends Thread{
         }
 
         // If the current thread's deque is empty, try to steal a task from another
-        // thread's deque
+        // thread's deque. If steal fails, we will obtain null. 
+        return steal();
+        
+    }
+
+    public Runnable steal(){
+        // iteratively checking all threads for work 
+        int threadId = (int) Thread.currentThread().getId() % numThreads;
+        Runnable task;
         for (int i = 0; i < numThreads; i++) {
             if (i != threadId && taskQueue[i].isEmpty() == false){
                 task = taskQueue[i].popTop();
@@ -65,11 +73,9 @@ public class workStealing extends Thread{
                     return task;  
             }
         }
-
-        // If no tasks are available, return null
         return null;
-    }
 
+    }
     public void awaitTermination()  {
         boolean empty = false;
         // check if all taskQueues are empty or not. 
