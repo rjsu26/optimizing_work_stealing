@@ -14,7 +14,9 @@ public class PrimeNumbers implements Runnable {
 
     private int startNum;
     private int endNum;
-    private int THRESHOLD;
+    private static int THRESHOLD;
+    private static int MIN_THRESHOLD;
+    private static int MAX_THRESHOLD;
     private static AtomicInteger noOfPrimeNumbers;
     private static workStealing pool;
 
@@ -22,7 +24,9 @@ public class PrimeNumbers implements Runnable {
         pool = pools;
         this.startNum = start;
         this.endNum = end;
-        this.THRESHOLD = threshold;
+        THRESHOLD = threshold;
+        MIN_THRESHOLD = (int)0.1*THRESHOLD;
+        MAX_THRESHOLD = (int)10*THRESHOLD;
         noOfPrimeNumbers = noOfPrimeNumber;
     }
 
@@ -85,5 +89,16 @@ public class PrimeNumbers implements Runnable {
 
     public int noOfPrimeNumbers() {
         return noOfPrimeNumbers.intValue();
+    }
+
+    public static void makeFine(){
+        // make the tasks more fine-grained i.e. reduce the threshold by 10%
+        THRESHOLD = Math.max((int)(0.9*THRESHOLD),MIN_THRESHOLD);
+        // System.out.println("Threshold decreased to : "+THRESHOLD);
+    }
+    public static void makeCoarse(){
+        // make the tasks more coarse-grained i.e. increase the threshold by 10%
+        THRESHOLD = Math.min((int)(1.1*THRESHOLD),MAX_THRESHOLD);
+        // System.out.println("Threshold increased to : "+THRESHOLD);
     }
 }
