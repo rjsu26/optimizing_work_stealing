@@ -7,7 +7,7 @@ work-stealing thread pools as part of its ExecutorService. Implement a work-stea
 pact of the optimizations you applied. 
 
 <p align = "center">
-<img src = "https://github.com/rjsu26/optimizing_work_stealing/tree/main/docs/ThreadPool.png"></p>
+<img src = "https://raw.githubusercontent.com/rjsu26/optimizing_work_stealing/main/docs/ThreadPool.png"></p>
 <p align = "center">
 Fig.1 - A threadPool creates many threads (workers) beforehand. A big task is recursively broken down into small sub-tasks until it is small enough to quickly processed by a single thread.
 </p>
@@ -19,7 +19,7 @@ Fig.1 - A threadPool creates many threads (workers) beforehand. A big task is re
 
 ## Implementation
 <p align = "center">
-<img src = "https://github.com/rjsu26/optimizing_work_stealing/tree/main/docs/Implementation.png"></p>
+<img src = "https://raw.githubusercontent.com/rjsu26/optimizing_work_stealing/main/docs/Implementation.png"></p>
 <p align = "center">
 Fig.2 - Interconnectedness of various components in this project</p>
 
@@ -40,3 +40,7 @@ Goto the `Runner.java` file and change the desired parameters
 ## Resources 
 The final report and presentation is included in the `docs` directory. Refer to them for a detailed explaination along with evaluation of the proposed optimization. 
 
+<p align = "center">
+<img src = "https://raw.githubusercontent.com/rjsu26/optimizing_work_stealing/main/docs/Time%20Spent%20Stealing%20wrt%20Runtime.png"></p>
+<p align = "center">
+Fig.3 - Comparison between proposed *memoStealing* wrt other algorithms</p>
